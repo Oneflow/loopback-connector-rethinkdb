@@ -245,7 +245,7 @@ RethinkDB.prototype.automigrate = _.debounce(function (models, done) {
           cb();
         }
       }, function (err) {
-        if(err) return done(e);
+        if (err) return done(err);
         _this.autoupdate(models, done);
       });
     });
@@ -525,6 +525,11 @@ RethinkDB.prototype.changeFeed = function (model, filter, options) {
     var sendResults = function () {
       _this.all(model, filter, options, function (error, data) {
         if (error) {
+          if (error.message.toLowerCase().indexOf('connection is closed') > -1) {
+            return _this.connect(function () {
+              sendResults();
+            });
+          }
           return observer.onError(error);
         }
 
